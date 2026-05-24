@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>语音调试</title>
+<style>body{font-family:system-ui;padding:20px;background:#faf5f0;} pre{background:#fff;padding:12px;border-radius:8px;font-size:13px;} button{padding:8px 16px;margin:4px;border:none;border-radius:8px;cursor:pointer;background:#7b8c76;color:#fff;font-size:14px;} button:hover{opacity:.85;}</style>
+</head>
+<body>
+<h2>🔊 浏览器可用语音列表</h2>
+<p id="st">正在加载...</p>
+<pre id="out"></pre>
+
+<h3>🧓 老年男声（目标）</h3>
+<button onclick="test('Grandpa (中文（中国大陆）)')">▶ Grandpa 大陆</button>
+<button onclick="test('Grandpa (中文（台湾）)')">▶ Grandpa 台湾</button>
+
+<h3>👨 其他男声</h3>
+<button onclick="test('Reed (中文（中国大陆）)')">▶ Reed</button>
+<button onclick="test('Rocko (中文（中国大陆）)')">▶ Rocko</button>
+<button onclick="test('Eddy (中文（中国大陆）)')">▶ Eddy</button>
+
+<h3>👩 女声</h3>
+<button onclick="test('婷婷')">▶ 婷婷</button>
+<button onclick="test('Sandy (中文（中国大陆）)')">▶ Sandy</button>
+<button onclick="test('Shelley (中文（中国大陆）)')">▶ Shelley</button>
+<button onclick="test('Flo (中文（中国大陆）)')">▶ Flo</button>
+
+<hr>
+<h3>🎯 直接用 Grandpa 说老医生台词（rate=0.82, pitch=0.55）</h3>
+<button onclick="speakGrandpa()" style="font-size:16px;padding:12px 24px;">🧓 听老医生说话</button>
+
+<script>
+const out = document.getElementById('out');
+const st = document.getElementById('st');
+
+function dumpVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) { st.textContent = '语音还没加载，等一下...'; return; }
+  st.textContent = `共 ${voices.length} 个语音`;
+  
+  let html = '';
+  const sorted = [...voices].sort((a,b) => {
+    const az = /zh/i.test(a.lang) ? 0 : 1;
+    const bz = /zh/i.test(b.lang) ? 0 : 1;
+    return az - bz || a.name.localeCompare(b.name);
+  });
+  sorted.forEach(v => {
+    const flag = /zh/i.test(v.lang) ? '🇨🇳' : '';
+    html += `${flag} <b>${v.name}</b> | lang=<code>${v.lang}</code>\n`;
+  });
+  out.textContent = html;
+}
+
+dumpVoices();
+window.speechSynthesis.onvoiceschanged = () => { dumpVoices(); };
+
+function test(name) {
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance('您好，我是脉大夫，今天感觉怎么样？');
+  u.lang = 'zh-CN'; u.rate=0.82; u.pitch=0.55;
+  const v = window.speechSynthesis.getVoices().find(x => x.name === name);
+  if (v) { u.voice = v; console.log('✅ 找到:', v.name); window.speechSynthesis.speak(u); }
+  else { alert('❌ 找不到 "' + name + '"！看上面的列表确认名字'); }
+}
+
+function speakGrandpa() {
+  window.speechSynthesis.cancel();
+  const voices = window.speechSynthesis.getVoices();
+  // 按实际优先级匹配
+  let v =
+    voices.find(x => /Grandpa.*中国大陆|Grandpa.*zh/.test(x.name)) ||
+    voices.find(x => /Grandpa/i.test(x.name));
+  if (!v) { alert('❌ 找不到 Grandpa！可用中文语音:\n' + voices.filter(x=>/zh/i.test(x.lang)).map(x=>x.name).join('\n')); return; }
+  const u = new SpeechSynthesisUtterance('您好，我是脉大夫。今天身体怎么样？有没有哪里不舒服？慢慢说，我帮您看看。');
+  u.voice = v;
+  u.rate = 0.82;
+  u.pitch = 0.55;
+  u.volume = 0.95;
+  console.log('🧓 使用声音:', v.name, '('+v.lang+')');
+  window.speechSynthesis.speak(u);
+}
+</script></body></html>

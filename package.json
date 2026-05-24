@@ -1,0 +1,23 @@
+{
+  "name": "maipai-chat",
+  "version": "1.0.0",
+  "description": "脉大夫中医问诊系统 - 基于 CodeBuddy API 的 AI 中医问诊网页应用",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "中医",
+    "AI问诊",
+    "CodeBuddy",
+    "WorkBuddy",
+    "chat",
+    "stream"
+  ],
+  "author": "tlswa",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

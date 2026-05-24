@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>中医健康调理报告 — 脉大夫</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=ZCOOL+XiaoWei&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    /* ===== 统一配色：与 MaipalAppFinalV3 主 UI 一致 ===== */
+    --ink: #5a4a3a;
+    --ink-mid: #6b5d4f;
+    --ink-light: #8c8072;
+    --paper: #f8f3ee;
+    --paper-warm: #faf6f0;
+    /* 主色调：鼠尾草绿 */
+    --primary: #7b8c76;
+    --primary-dark: #5f7060;
+    --primary-light: #a8b0a5;
+    /* 暖沙色（发送按钮、装饰） */
+    --sand: #D7C8B0;
+    --sand-dark: #c4b29a;
+    /* 功能色 */
+    --red-warm: #dc2626;
+    --red-light: #fef2f2;
+    --orange-warm: #ea580c;
+    --orange-light: #fff7ed;
+    --green-dark: #7b8c76;
+    --green-light: #f0f4ef;
+    --border: rgba(123,140,118,.18);
+    --border-strong: #D7C8B0;
+    --shadow-sm: 0 1px 6px rgba(107,93,79,.06);
+    --shadow: 0 2px 12px rgba(107,93,79,.08);
+    --shadow-lg: 0 8px 32px rgba(107,93,79,.14);
+    --radius: 16px;
+    --radius-sm: 12px;
+    /* 兼容旧变量名 */
+    --accent: #7b8c76;
+    --accent-light: #a8b0a5;
+    --brown: #7b8c76;
+    --brown-light: #6b5d4f;
+    --green: #7b8c76;
+  }
+
+  body {
+    font-family: 'Noto Serif SC', -apple-system, 'PingFang SC', serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== 页面框架 ===== */
+  .report-page {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--paper);
+    position:relative;
+    overflow-x:hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ===== 顶部装饰 ===== */
+  .report-top {
+    position:relative;
+    background: linear-gradient(165deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+    padding: 36px 24px 32px;
+    border-radius: 0 0 28px 28px;
+    color:#fff;
+    overflow:hidden;
+  }
+  .report-top::before {
+    content:''; position:absolute; top:-40px; right:-40px;
+    width:140px; height:140px; border-radius:50%;
+    background:rgba(255,255,255,.06);
+  }
+  .report-top::after {
+    content:''; position:absolute; bottom:-20px; left:-20px;
+    width:80px; height:80px; border-radius:50%;
+    background:rgba(255,255,255,.04);
+  }
+  .top-row {
+    display:flex; align-items:center; gap:14px; margin-bottom:16px; position:relative;z-index:1;
+  }
+  .doc-avatar {
+    width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.18);
+    backdrop-filter:blur(4px); border:2px solid rgba(255,255,255,.3);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .doc-avatar svg { width:28px; height:28px; stroke:#fff; fill:none; stroke-width:1.8; stroke-linecap:round;stroke-linejoin:round;}
+  .top-info h1 {
+    font-size:20px; font-weight:700; letter-spacing:2px;
+  }
+  .top-info p {
+    font-size:12px; opacity:.85; margin-top:2px; font-family:'ZCOOL XiaoWei',serif;
+  }
+  .report-date {
+    font-size:11px; opacity:.7; text-align:right; position:relative; z-index:1;
+  }
+
+  /* ===== 大夫寄语（核心特色）===== */
+  .doctor-note {
+    margin: -14px 20px 0; position:relative; z-index:10;
+  }
+  .note-bubble {
+    background:#fff; border-radius:var(--radius); padding:18px 18px 16px;
+    box-shadow:var(--shadow-lg); border:1px solid var(--border);
+    position:relative; 
+  }
+  .note-bubble::before {
+    content:''; position:absolute; top:-8px; left:28px;
+    width:16px; height:16px; background:#fff;
+    border-left:1px solid var(--border); border-top:1px solid var(--border);
+    transform:rotate(45deg);
+  }
+  .note-label {
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:600; color:var(--primary);
+    margin-bottom:8px; letter-spacing:1px;
+  }
+  .note-text {
+    font-size:14px; color:var(--ink); line-height:1.85;
+  }
+  .note-text strong { color:var(--primary-dark); font-weight:600; }
+
+  /* ===== 基本信息卡 ===== */
+  .info-card {
+    margin: 16px 20px; background:#fff; border-radius:var(--radius);
+    padding:14px 18px; box-shadow:var(--shadow);
+    border:1px solid var(--border);
+    display:flex; align-items:center; gap:14px;
+  }
+  .info-avatar {
+    width:48px; height:48px; border-radius:50%; overflow:hidden;
+    flex-shrink:0; background:linear-gradient(135deg,var(--primary-light),var(--sand));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px; color:var(--primary-dark); font-weight:700;
+    border:2px dashed var(--border-strong);
+  }
+  .info-fields { flex:1; }
+  .info-row {
+    display:flex; align-items:baseline; gap:8px; font-size:13px;
+    line-height:1.75;
+  }
+  .info-row:last-child .info-value { color:var(--orange-warm); }
+  .info-label { color:var(--ink-light); white-space:nowrap; min-width:48px; font-size:12px;}
+  .info-value { color:var(--ink); font-weight:500; }
+
+  /* ===== 章节通用 ===== */
+  .section {
+    margin: 0 20px 18px;
+  }
+  .section-head {
+    display:flex; align-items:center; gap:8px; margin-bottom:12px;
+    padding-bottom:8px; border-bottom:2px solid var(--border);
+    position:relative;
+  }
+  .section-head::after {
+    content:''; position:absolute; bottom:-2px; left:0; width:60px;
+    height:2px; background:var(--primary);
+  }
+  .section-icon {
+    width:28px; height:28px; border-radius:8px; display:flex;
+    align-items:center; justify-content:center; font-size:14px; flex-shrink:0;
+  }
+  .section-title { font-size:16px; font-weight:700; color:var(--ink); }
+
+  /* ===== 四诊卡片 ===== */
+  .sizhen-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sizhen-card {
+    background:#fff; border-radius:var(--radius-sm); padding:14px;
+    border:1px solid var(--border); box-shadow:var(--shadow-sm);
+    transition:transform .15s;
+  }
+  .sizhen-card:active { transform:scale(.98); }
+  .sizhen-card.full { grid-column:1/-1; }
+  .sz-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .sz-label {
+    font-size:12px; font-weight:600; letter-spacing:.5px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .sz-body { font-size:13px; }
+  .sz-item {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:4px 0; border-bottom:1px dotted var(--border-strong);
+  }
+  .sz-item:last-child { border:none; }
+  .sz-k { font-size:12px; color:var(--ink-light); }
+  .sz-v { font-size:12.5px; font-weight:500; color:var(--ink); max-width:65%;text-align:right;word-break:break-all;}
+  .sz-tag {
+    display:inline-flex; align-items:center; gap:2px;
+    font-size:10px; padding:1px 7px; border-radius:6px;
+    font-weight:500; flex-shrink:0; margin-left:4px; white-space:nowrap;
+  }
+  .tag-normal { background:var(--green-light); color:var(--green-dark); }
+  .tag-warning { background:var(--orange-light); color:var(--orange-warm); }
+  .tag-abnormal { background:var(--red-light); color:var(--red-warm); }
+  .tag-skip { background:#f5f5f5; color:#aaa; }
+
+  /* ===== 辨证分析（重点区域）===== */
+  .analysis-box {
+    background:rgba(255,255,255,.8);
+    border:1.5px solid var(--border-strong); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow);
+    position:relative; overflow:hidden;
+  }
+  .analysis-box::before {
+    content:'✦'; position:absolute; top:10px; right:14px;
+    font-size:20px; color:var(--border-strong); opacity:.4;
+  }
+  .analysis-row {
+    display:flex; align-items:flex-start; margin-bottom:12px;
+  }
+  .analysis-row:last-child { margin-bottom:0; }
+  .analysis-k {
+    font-size:12px; font-weight:700; color:var(--primary-dark);
+    min_width:64px; flex-shrink:0; padding-top:2px;
+    letter-spacing:.5px;
+  }
+  .analysis-v {
+    font-size:13px; color:var(--ink); line-height:1.75; flex:1;
+  }
+  .zheng-type {
+    display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;
+  }
+  .zheng-pill {
+    background:var(--primary);
+    color:#fff; font-size:11.5px; padding:4px 12px; border-radius:10px;
+    font-weight:600; letter-spacing:.5px;
+    box-shadow:0 2px 6px rgba(123,140,118,.2);
+  }
+  .constitution-tag {
+    background:var(--sand);
+    color:#5a4a3a; font-size:11px; padding:4px 12px; border-radius:10px;
+    font-weight:600;
+    box-shadow:0 2px 6px rgba(215,200,176,.2);
+  }
+
+  /* 推理链条 —— 核心亮点 */
+  .reasoning-box {
+    margin-top:14px; padding-top:14px;
+    border-top:1.5px dashed var(--border);
+    background:rgba(255,255,255,.55);
+    border-radius:10px; padding:14px; margin-left:-14px; margin-right:-14px;
+  }
+  .reasoning-title {
+    font-size:12px; font-weight:700; color:var(--primary);
+    margin-bottom:8px; display:flex; align-items:center; gap:5px;
+  }
+  .reasoning-step {
+    display:flex; gap:10px; margin-bottom:10px;
+    align-items:flex-start;
+  }
+  .reasoning-step:last-child { margin-bottom:0; }
+  .step-num {
+    width:22px; height:22px; border-radius:50%;
+    background:var(--primary); color:#fff; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:1px;
+  }
+  .step-content {
+    font-size:12.5px; color:var(--ink-mid); line-height:1.7;
+  }
+  .step-content em {
+    color:var(--primary-dark); font-style:normal; font-weight:600;
+  }
+  .step-arrow {
+    text-align:center; color:var(--border-strong); font-size:14px;
+    margin:4px 0 4px 31px; font-size:12px;
+  }
+
+  /* ===== 调养建议 ===== */
+  .advice-list { list-style:none; }
+  .advice-group { margin-bottom:16px; }
+  .advice-group:last-child { margin-bottom:0; }
+  .advice-gtitle {
+    font-size:13.5px; font-weight:700; color:var(--primary-dark);
+    margin-bottom:8px; display:flex; align-items:center; gap:6px;
+    letter-spacing:.3px;
+  }
+  .advice-subtitle {
+    font-size:11px; color:var(--ink-light); margin-bottom:6px;
+    padding-left:4px; font-style: italic;
+  }
+  .advice-item {
+    font-size:13px; color:var(--ink-mid); padding:5px 0 5px 18px;
+    position:relative; line-height:1.7;
+  }
+  .advice-item::before {
+    content:'▸'; position:absolute; left:3px; color:var(--primary);
+    font-size:12px; font-weight:bold; top:5px;
+  }
+  .advice-item strong { color:var(--ink); }
+  .advice-item em {
+    color:var(--green-dark); font-style:normal; font-weight:500;
+    background:var(--green-light); padding:1px 5px; border-radius:4px;
+    font-size:12px;
+  }
+
+  /* 食疗卡片 */
+  .food-card {
+    background:rgba(255,255,255,.9);
+    border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+    padding:14px; margin:8px 0;
+  }
+  .food-card-title {
+    font-size:11.5px; font-weight:700; color:var(--primary); margin-bottom:8px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .food-list { display:flex; flex-wrap:wrap; gap:6px; }
+  .food-pill {
+    font-size:11.5px; padding:4px 11px; background:#fff;
+    border:1px solid var(--border); border-radius:8px; color:var(--ink-mid);
+    font-weight:500; white-space:nowrap;
+  }
+  .food-recipe {
+    margin-top:8px; padding:10px 12px; background:#fff;
+    border-radius:8px; border:1px dotted var(--border-strong);
+    font-size:12.5px; color:var(--ink-mid); line-height:1.7;
+  }
+  .food-recipe strong { color:var(--brown); }
+
+  /* 优先级标签 */
+  .priority-high {
+    display:inline-flex; align-items:center; gap:3px;
+    font-size:10px; background:var(--red-light); color:var(--red-warm);
+    padding:1px 6px; border-radius:4px; font-weight:600; margin-left:4px;
+    vertical-align:middle;
+  }
+  .priority-mid {
+    display:inline-flex; align-items:center; gap:3px;
+    font-size:10px; background:var(--orange-light); color:var(--orange-warm);
+    padding:1px 6px; border-radius:4px; font-weight:600; margin-left:4px;
+    vertical-align:middle;
+  }
+
+  /* ===== 底部声明 ===== */
+  .report-footer {
+    margin:20px 20px 24px; text-align:center;
+  }
+  .disclaimer {
+    font-size:11px; color:#aaa; line-height:1.8;
+    padding:14px 16px; background:rgba(248,243,238,.8); border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+  }
+  .footer-brand {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    margin-top:14px; font-size:11.5px; color:var(--ink-light);
+    font-family:'ZCOOL XiaoWei',serif; letter-spacing:1px;
+  }
+  .footer-brand svg { width:16px; height:16px; stroke:var(--ink-light); fill:none; stroke-width:2; }
+
+  /* ===== 操作栏 ===== */
+  .action-bar {
+    position:sticky; bottom:0; left:0; right:0;
+    padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(248,243,238,.94); backdrop-filter:blur(16px);
+    border-top:1px solid var(--border); display:flex; gap:10px;
+    z-index:100;
+  }
+  .action-btn {
+    flex:1; padding:13px 0; border-radius:12px; border:none;
+    font-size:14px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:all .2s; font-family:inherit;
+  }
+  .action-btn:active { transform:scale(.97); }
+  .action-btn-primary {
+    background:var(--primary); color:#fff;
+    box-shadow:0 4px 12px rgba(123,140,118,.25);
+  }
+  .action-btn-secondary {
+    background:#fff; color:var(--ink); border:1px solid var(--border);
+  }
+
+  /* ===== 打印样式 ===== */
+  @media print {
+    body { background:#fff; }
+    .action-bar { display:none; }
+    .report-top { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .report-page { max-width:none; }
+  }
+
+  /* 动画 */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(12px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .section { animation:fadeUp .4s ease both; }
+  .section:nth-child(2) { animation-delay:.05s; }
+  .section:nth-child(3) { animation-delay:.1s; }
+  .section:nth-child(4) { animation-delay:.15s; }
+
+  /* 返回按钮（从对话页打开时显示） */
+  .back-btn{
+    position:fixed;top:12px;left:12px;z-index:200;
+    width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,.7);backdrop-filter:blur(4px);
+    border:none;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;color:var(--ink);transition:transform .15s;
+  }
+  .back-btn:active{transform:scale(.92);}
+  .back-btn svg{width:18px;height:18px;}
+</style>
+</head>
+<body>
+
+<!-- 返回按钮 -->
+<button class="back-btn" onclick="history.back()" title="返回问诊">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+
+<div class="report-page" id="reportPage">
+  <!-- 动态渲染 -->
+  <div style="padding:40px 24px;text-align:center;color:var(--ink-light);">
+    <p>加载报告中...</p>
+  </div>
+</div>
+
+<!-- 操作按钮栏 -->
+<div class="action-bar">
+  <button class="action-btn action-btn-secondary" onclick="window.print()">
+    📄 保存 / 打印
+  </button>
+  <button class="action-btn action-btn-primary" onclick="history.back()">
+    ↩ 返回继续问诊
+  </button>
+</div>
+
+<script>
+(function(){
+  // 入口：尝试加载报告数据，最多重试 2 次（处理跨标签页 localStorage 同步延迟）
+  let retryCount = 0;
+  const maxRetry = 2;
+  const retryDelay = 300; // ms
+
+  function tryLoadReport() {
+    let report;
+    let rawData;
+    try {
+      let raw = localStorage.getItem('maipal_report_data');
+      if (!raw) {
+        raw = localStorage.getItem('maipal_report_data_backup');
+      }
+      console.log('[Report] localStorage 数据长度:', raw ? raw.length : 0, '(第', retryCount + 1, '次尝试)');
+
+      if (!raw) {
+        if (retryCount < maxRetry) {
+          retryCount++;
+          console.log('[Report] 数据为空，', retryDelay, 'ms 后重试...');
+          setTimeout(tryLoadReport, retryDelay);
+          return;
+        }
+        showFallback();
+        return;
+      }
+      rawData = JSON.parse(raw);
+      report = rawData.report;
+      console.log('[Report] 解析成功, report 存在?', !!report, 'patientName:', report?.patientName);
+      // 确保 backup 有数据
+      if (!localStorage.getItem('maipal_report_data_backup')) {
+        localStorage.setItem('maipal_report_data_backup', raw);
+      }
+    } catch(e) {
+      console.error('[Report] 解析失败', e);
+      showFallback();
+      return;
+    }
+
+    // 如果有结构化 report 对象且有 patientName → 正常动态渲染
+    if (report && report.patientName) {
+      renderFullReport(report);
+      return;
+    }
+
+    // 兜底：没有结构化数据，但有 AI 文字报告 → 直接显示文字
+    if (rawData && rawData.lastAiContent) {
+      renderTextReport(rawData);
+      return;
+    }
+
+    showFallback();
+  }
+
+  // 启动加载
+  tryLoadReport();
+
+  // ===== 完整结构化渲染 =====
+  function renderFullReport(report) {
+    const page = document.getElementById('reportPage');
+    const now = new Date();
+    const dateStr = report.dateStr || `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+    const diagNum = now.getTime().toString(36).slice(-6).toUpperCase();
+
+  page.innerHTML = `
+    <!-- 顶部 -->
+    <div class="report-top">
+      <div class="top-row">
+        <div class="doc-avatar">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+        </div>
+        <div class="top-info">
+          <h1>中医健康调理报告</h1>
+          <p>四诊合参 · 辨证论治</p>
+        </div>
+      </div>
+      <div class="report-date">公元${dateStr} · 诊号 ${diagNum}</div>
+    </div>
+
+    <!-- 大夫寄语 -->
+    <div class="doctor-note">
+      <div class="note-bubble">
+        <div class="note-label">📜 大夫的话</div>
+        <div class="note-text">${escHtml(report.doctorNote || '暂无寄语')}</div>
+      </div>
+    </div>
+
+    <!-- 基本信息 -->
+    <div class="info-card">
+      <div class="info-avatar">${(report.patientName || '?')[0]}</div>
+      <div class="info-fields">
+        <div class="info-row"><span class="info-label">称呼</span><span class="info-value">${esc(report.patientName)}</span></div>
+        <div class="info-row"><span class="info-label">年龄</span><span class="info-value">${esc(report.age || '未知')}</span></div>
+        <div class="info-row"><span class="info-label">主诉</span><span class="info-value">${esc(report.chiefComplaint || '—')}</span></div>
+        ${report.bodyType ? `<div class="info-row"><span class="info-label">体型</span><span class="info-value">${esc(report.bodyType)}</span></div>` : ''}
+      </div>
+    </div>
+
+    <!-- 四诊摘要 -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-icon" style="background:var(--green-light);color:var(--green-dark);">👁</div>
+        <span class="section-title">四诊合参摘要</span>
+      </div>
+      <div class="sizhen-grid">
+        ${renderSizhenCard('👤 望·面色', report.sizhen?.face)}
+        ${renderSizhenCard('👅 望·舌象', report.sizhen?.tongue)}
+        ${renderSizhenCard('🎤 闻·语声', report.sizhen?.voice)}
+        ${renderSizhenCard('💬 问·主诉', report.sizhen?.inquiry)}
+      </div>
+    </div>
+
+    <!-- 辨证分析 -->
+    ${report.analysis ? renderAnalysis(report.analysis, report.reasoning) : ''}
+
+    <!-- 调养建议 -->
+    ${report.advice ? renderAdvice(report.advice) : ''}
+
+    <!-- 免责声明 -->
+    <div class="report-footer">
+      <div class="disclaimer">
+        本报告由<strong>脉大夫 AI 中医助手</strong>基于四诊信息自动生成，仅供参考与健康管理之用。<br>
+        不作为疾病诊断依据，不替代执业医师面诊开方。<br>
+        如有任何身体不适，请及时前往正规医疗机构就诊。
+      </div>
+      <div class="footer-brand">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        脉大夫 · AI 中医健康顾问
+      </div>
+    </div>
+  `;
+
+  // ===== 渲染函数 =====
+  function renderSizhenCard(title, data) {
+    if (!data || !data.items || data.items.length === 0) {
+      return `<div class="sizhen-card">
+        <div class="sz-header"><div class="sz-label">${title}</div><span class="sz-tag tag-skip">未完成</span></div>
+        <div class="sz-body"><div class="sz-item"><span class="sz-k" style="color:var(--ink-light)">本次未采集</span></div></div>
+      </div>`;
+    }
+    const statusClass = data.status?.includes('正常') ? 'tag-normal' : data.status?.includes('重点') ? 'tag-abnormal' : 'tag-warning';
+    let items = '';
+    data.items.forEach(item => {
+      const tag = item.tag ? `<span class="sz-tag ${item.tag === '正常' ? 'tag-normal' : 'tag-warning'}">${esc(item.tag)}</span>` : '';
+      items += `<div class="sz-item"><span class="sz-k">${esc(item.key)}</span><span class="sz-v">${esc(item.value)}${tag}</span></div>`;
+    });
+    return `<div class="sizhen-card">
+      <div class="sz-header"><div class="sz-label">${title}</div><span class="sz-tag ${statusClass}">${esc(data.status)}</span></div>
+      <div class="sz-body">${items}</div>
+    </div>`;
+  }
+
+  function renderAnalysis(a, reasoning) {
+    let zhengPills = (a.zhengxing || []).map(z => `<span class="zheng-pill">${esc(z)}</span>`).join('');
+    let reasonHtml = '';
+    if (reasoning && reasoning.length > 0) {
+      let steps = '';
+      reasoning.forEach((r, i) => {
+        if (i > 0) steps += '<div class="step-arrow">↓</div>';
+        steps += `<div class="reasoning-step"><span class="step-num">${i+1}</span><div class="step-content"><em>${esc(r.observation)}</em>→ ${esc(r.principle)}</div></div>`;
+      });
+      reasonHtml = `<div class="reasoning-box"><div class="reasoning-title">📖 我是怎么得出这个判断的</div>${steps}</div>`;
+    }
+    return `<div class="section">
+      <div class="section-head">
+        <div class="section-icon" style="background:var(--red-light);color:var(--red-warm);">🔍</div>
+        <span class="section-title">辨证分析</span>
+      </div>
+      <div class="analysis-box">
+        ${a.bagang ? `<div class="analysis-row"><span class="analysis-k">八纲定位</span><span class="analysis-v"><strong>${esc(a.bagang)}</strong></span></div>` : ''}
+        ${a.organs ? `<div class="analysis-row"><span class="analysis-k">病位脏腑</span><span class="analysis-v">${esc(a.organs)}</span></div>` : ''}
+        ${a.nature ? `<div class="analysis-row"><span class="analysis-k">病性归纳</span><span class="analysis-v">${esc(a.nature)}</span></div>` : ''}
+        ${zhengPills ? `<div class="analysis-row"><span class="analysis-k">主要证型</span><div class="zheng-type">${zhengPills}</div></div>` : ''}
+        ${a.tizhi ? `<div class="analysis-row"><span class="analysis-k">体质辨识</span><div class="analysis-v"><span class="constitution-tag">${esc(a.tizhi)}</span>${a.tizhiNote ? `<span style="font-size:12px;color:var(--ink-light);margin-left:6px;">(${esc(a.tizhiNote)})</span>` : ''}</div></div>` : ''}
+        ${reasonHtml}
+      </div>
+    </div>`;
+  }
+
+  function renderAdvice(adv) {
+    let html = `<div class="section"><div class="section-head"><div class="section-icon" style="background:var(--green-light);color:var(--green-dark);">🌿</div><span class="section-title">调养方案</span></div><ul class="advice-list">`;
+
+    // 治法
+    if (adv.zhifa) {
+      html += `<li class="advice-group"><div class="advice-gtitle">🍵 治法总纲</div><div class="advice-item">以<strong>${esc(adv.zhifa)}</strong>为根本大法。</div></li>`;
+    }
+
+    // 食疗
+    if (adv.food) {
+      let pills = (adv.food.recommended || []).map(f => `<span class="food-pill">${esc(f)}</span>`).join('');
+      let recipes = (adv.food.recipes || []).map(r => `<div class="food-recipe"><strong>${esc(r.name)}</strong><br><span style="color:var(--ink-light);font-size:11.5px;">${esc(r.detail)}</span></div>`).join('');
+      html += `<li class="advice-group"><div class="advice-gtitle">🍲 食疗调理<span class="priority-high">★ 最重要</span></div>`;
+      if (pills) html += `<div class="food-card"><div class="food-card-title">🥢 推荐食材</div><div class="food-list">${pills}</div>${recipes}</div>`;
+      if (adv.food.avoid) html += `<div class="advice-item" style="color:var(--red-warm);">⚠️ <strong>忌口提醒：</strong>${esc(adv.food.avoid)}</div>`;
+      html += `</li>`;
+    }
+
+    // 生活起居
+    if (adv.lifestyle && adv.lifestyle.length > 0) {
+      html += `<li class="advice-group"><div class="advice-gtitle">⏰ 作息起居<span class="priority-mid">↑ 坚持</span></div>`;
+      adv.lifestyle.forEach(l => { html += `<div class="advice-item">${esc(l)}</div>`; });
+      html += `</li>`;
+    }
+
+    // 穴位
+    if (adv.acupoints && adv.acupoints.length > 0) {
+      html += `<li class="advice-group"><div class="advice-gtitle">🙏 穴位自我保健</div>`;
+      adv.acupoints.forEach(ap => {
+        html += `<div class="advice-item"><strong>${esc(ap.name)}</strong>（${esc(ap.location)}）：${esc(ap.method)}。<em>功效：${esc(ap.effect)}</em></div>`;
+      });
+      html += `</li>`;
+    }
+
+    // 功法
+    if (adv.exercise) {
+      html += `<li class="advice-group"><div class="advice-gtitle">🧘 养生功法</div><div class="advice-item">${esc(adv.exercise)}</div></li>`;
+    }
+
+    // 特别叮嘱
+    if (adv.warning) {
+      html += `<li class="advice-group"><div class="advice-gtitle">⚠️ 特别叮嘱</div><div class="advice-item" style="color:var(--red-warm);">${esc(adv.warning)}</div></li>`;
+    }
+
+    html += `</ul></div>`;
+    return html;
+  }
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escHtml(s) {
+    // 保留换行为 <br>
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  } // end renderFullReport
+
+  // ===== 兜底：用 AI 文字内容渲染 =====
+  function renderTextReport(data) {
+    const page = document.getElementById('reportPage');
+    const now = new Date();
+    const dateStr = data.dateStr || `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+    const diagNum = now.getTime().toString(36).slice(-6).toUpperCase();
+    // 简单 markdown→html
+    let content = String(data.lastAiContent || '');
+    content = content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^### (.+)$/gm, '<h3 style="margin:16px 0 8px;font-size:15px;color:var(--primary-dark);">$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2 style="margin:20px 0 10px;font-size:17px;color:var(--primary);">$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1 style="margin:24px 0 12px;font-size:20px;color:var(--primary);">$1</h1>')
+      .replace(/^- (.+)$/gm, '<div style="padding:4px 0 4px 16px;position:relative;">▸ $1</div>')
+      .replace(/\n/g, '<br>');
+
+    page.innerHTML = `
+      <div class="report-top">
+        <div class="top-row">
+          <div class="doc-avatar">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="top-info">
+            <h1>中医健康调理报告</h1>
+            <p>四诊合参 · 辨证论治</p>
+          </div>
+        </div>
+        <div class="report-date">公元${dateStr} · 诊号 ${diagNum}</div>
+      </div>
+      <div class="section" style="margin-top:20px;">
+        <div class="section-head">
+          <div class="section-icon" style="background:var(--green-light);color:var(--green-dark);">📋</div>
+          <span class="section-title">完整报告</span>
+        </div>
+        <div style="background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);font-size:14px;line-height:1.85;color:var(--ink);">
+          ${content}
+        </div>
+      </div>
+      <div class="report-footer">
+        <div class="disclaimer">
+          本报告由<strong>脉大夫 AI 中医助手</strong>基于四诊信息自动生成，仅供参考。如有不适，请及时就医。
+        </div>
+      </div>
+    `;
+  }
+
+  function showFallback() {
+    document.getElementById('reportPage').innerHTML = `
+      <div style="padding:80px 24px;text-align:center;">
+        <p style="font-size:18px;color:var(--ink);margin-bottom:12px;">暂无报告数据</p>
+        <p style="font-size:14px;color:var(--ink-light);">请在与脉大夫完成问诊后，点击「查看报告」按钮进入此页面。</p>
+        <button onclick="history.back()" style="margin-top:20px;padding:12px 24px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:15px;cursor:pointer;">返回问诊</button>
+      </div>
+    `;
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>脉大夫 - 中医问诊</title>
+  <style>
+    :root {
+      --bg-primary: #faf8f5;
+      --bg-secondary: #f5f0e8;
+      --bg-tertiary: #ede8de;
+      --text-primary: #3d3229;
+      --text-secondary: #5c5043;
+      --text-muted: #8b7d6b;
+      --accent: #8b4513;
+      --accent-light: #a0522d;
+      --border: #d4c8b8;
+      --user-msg-bg: #e8e0d5;
+      --ai-msg-bg: #ffffff;
+      --shadow: 0 2px 8px rgba(61, 50, 41, 0.08);
+      --shadow-hover: 0 4px 16px rgba(61, 50, 41, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .header-title-wrap { display: flex; flex-direction: column; }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.5px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .model-select {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .model-select:focus { border-color: var(--accent); }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--accent);
+    }
+
+    /* Chat Container */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      scroll-behavior: smooth;
+    }
+
+    .messages-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Welcome Screen */
+    .welcome {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .welcome-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .welcome h2 {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* Message Styles */
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+    }
+
+    .message.ai .avatar {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    }
+
+    .message.user .avatar {
+      background: linear-gradient(135deg, #6b8e6b 0%, #8fbc8f 100%);
+    }
+
+    .message-content {
+      max-width: calc(100% - 60px);
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.7;
+      box-shadow: var(--shadow);
+    }
+
+    .message.ai .message-content {
+      background: var(--ai-msg-bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.user .message-content {
+      background: var(--user-msg-bg);
+      color: var(--text-primary);
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-content p { margin-bottom: 10px; }
+    .message-content p:last-child { margin-bottom: 0; }
+
+    /* Markdown Styles */
+    .message-content pre {
+      background: #f5f2ed;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    .message-content code {
+      background: #f5f2ed;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+    }
+
+    .message-content pre code { background: none; padding: 0; }
+
+    .message-content strong { color: var(--accent); font-weight: 600; }
+
+    .message-content em { color: var(--text-secondary); font-style: italic; }
+
+    /* Input Area */
+    .input-area {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      flex-shrink: 0;
+    }
+
+    .input-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-box {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      min-height: 52px;
+      max-height: 200px;
+      font-family: inherit;
+      color: var(--text-primary);
+    }
+
+    .input-box:focus { border-color: var(--accent); }
+
+    .input-box::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.2s;
+      box-shadow: var(--shadow);
+    }
+
+    .send-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Voice Button (Mic) */
+    .voice-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.2s;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .voice-btn:hover:not(:disabled) {
+      background: var(--bg-tertiary);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .voice-btn.recording {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+      animation: micPulse 1.2s infinite;
+    }
+
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+      50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+    }
+
+    .voice-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Speaker Button (AI message TTS) */
+    .speaker-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .speaker-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--bg-secondary);
+    }
+
+    .speaker-btn.speaking {
+      color: white;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Recording Hint */
+    .recording-hint {
+      text-align: center;
+      font-size: 13px;
+      color: #dc2626;
+      padding: 6px 12px;
+      margin: 0 auto 8px;
+      max-width: 800px;
+      display: none;
+    }
+
+    .recording-hint.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    /* Loading Indicator */
+    .loading {
+      display: flex;
+      gap: 4px;
+      padding: 12px 0;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .header { padding: 10px 16px; }
+      .header-title { font-size: 16px; }
+      .chat-container { padding: 12px; }
+      .message-content { max-width: calc(100% - 50px); font-size: 14px; }
+      .input-area { padding: 12px 16px; }
+    }
+
+    /* ====== 📸 Camera Modal (望诊) ====== */
+    .camera-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000; padding: 20px;
+    }
+    .camera-modal.active { display: flex; animation: fadeIn 0.2s ease; }
+    .camera-panel {
+      background: white; border-radius: 16px; padding: 20px;
+      max-width: 560px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .camera-title {
+      font-size: 18px; font-weight: 600; color: var(--text-primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .camera-guide {
+      font-size: 13px; color: var(--text-secondary);
+      padding: 8px 12px; background: var(--bg-secondary);
+      border-radius: 8px; border-left: 3px solid var(--accent);
+    }
+    .camera-video-wrap {
+      position: relative; width: 100%; aspect-ratio: 4/3;
+      background: #111; border-radius: 12px; overflow: hidden;
+    }
+    .camera-video-wrap video, .camera-video-wrap canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .camera-video-wrap canvas { display: none; }
+    .camera-frame-hint {
+      position: absolute; inset: 12%; border: 2px dashed rgba(255,255,255,0.5);
+      border-radius: 50%; pointer-events: none;
+    }
+    .camera-frame-hint.tongue {
+      inset: auto 20% 15% 20%; top: 30%; border-radius: 45%;
+    }
+    .camera-actions {
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .cam-btn {
+      padding: 10px 18px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-primary); color: var(--text-primary);
+      cursor: pointer; font-size: 14px; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .cam-btn:hover { background: var(--bg-tertiary); }
+    .cam-btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white; border-color: transparent;
+    }
+    .cam-btn.primary:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+    .cam-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .cam-status {
+      font-size: 13px; color: var(--text-muted); min-height: 18px;
+    }
+    .cam-status.err { color: #dc2626; }
+    .cam-status.ok { color: #16a34a; }
+
+    /* 望诊结果消息的醒目样式 */
+    .diagnosis-card {
+      background: linear-gradient(135deg, #fdf6ec, #faf0df);
+      border: 1px solid #e8d4a8;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin: 6px 0;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .diagnosis-card .tag {
+      display: inline-block;
+      background: var(--accent); color: white;
+      padding: 2px 10px; border-radius: 10px;
+      font-size: 12px; margin-bottom: 6px;
+    }
+
+    /* ====== 🎙️ 录音弹框（闻诊） ====== */
+    .voice-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center;
+      z-index: 2000; padding: 20px;
+    }
+    .voice-modal.active { display: flex; animation: fadeIn 0.2s ease; }
+    .voice-panel {
+      background: white; border-radius: 16px; padding: 22px;
+      max-width: 460px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .voice-title {
+      font-size: 18px; font-weight: 600; color: var(--text-primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .voice-script-hint {
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .voice-script {
+      font-size: 20px; font-weight: 500; color: var(--text-primary);
+      background: var(--bg-secondary);
+      border-left: 4px solid var(--accent);
+      padding: 14px 18px; border-radius: 10px;
+      text-align: center; letter-spacing: 1px;
+      user-select: text;
+    }
+    .voice-mic-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; padding: 8px 0;
+    }
+    .voice-mic {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 6px 20px rgba(139,69,19,0.35);
+      transition: transform 0.2s;
+    }
+    .voice-mic:hover:not(:disabled) { transform: scale(1.04); }
+    .voice-mic.recording {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      animation: micPulse 1s infinite;
+    }
+    .voice-mic:disabled { opacity: 0.5; cursor: not-allowed; }
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
+      50% { box-shadow: 0 0 0 18px rgba(220,38,38,0); }
+    }
+    .voice-countdown {
+      font-size: 14px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+      min-height: 20px;
+    }
+    .voice-level {
+      width: 100%; height: 6px; border-radius: 3px;
+      background: var(--bg-tertiary); overflow: hidden;
+    }
+    .voice-level-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, var(--accent));
+      width: 0%; transition: width 0.08s linear;
+    }
+    .voice-status {
+      font-size: 13px; color: var(--text-muted); min-height: 18px; text-align: center;
+    }
+    .voice-status.err { color: #dc2626; }
+    .voice-status.ok { color: #16a34a; }
+    .voice-actions {
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">🧑‍⚕️</div>
+      <div class="header-title-wrap">
+        <div class="header-title">脉大夫</div>
+        <div class="header-sub">
+          <span class="status-dot"></span>
+          <span id="statusText">资深中医师</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <select class="model-select" id="modelSelect">
+        <option value="claude-sonnet-4.6-1m">Claude Sonnet 4.6 (1M)</option>
+        <option value="claude-opus-4.6-1m">Claude Opus 4.6 (1M)</option>
+        <option value="claude-opus-4.6">Claude Opus 4.6</option>
+        <option value="claude-opus-4.5">Claude Opus 4.5</option>
+        <option value="gpt-5.4">GPT-5.4</option>
+        <option value="gpt-5.2">GPT-5.2</option>
+        <option value="gemini-3.0-pro">Gemini 3.0 Pro</option>
+        <option value="gemini-3.0-flash">Gemini 3.0 Flash</option>
+        <option value="deepseek-v3-2-volc-ioa">DeepSeek V3</option>
+        <option value="hunyuan-2.0-thinking-ioa">混元 Thinking</option>
+        <option value="kimi-k2.5-ioa">Kimi K2.5</option>
+        <option value="glm-5.0-ioa">GLM 5.0</option>
+        <option value="minimax-m2.7-ioa">MiniMax M2.7</option>
+      </select>
+      <button class="icon-btn" id="clearBtn" title="新问诊">🔄</button>
+      <button class="icon-btn" id="exportBtn" title="导出记录">📋</button>
+    </div>
+  </header>
+
+  <!-- Chat Container -->
+  <main class="chat-container" id="chatContainer">
+    <div class="messages-wrapper" id="messagesWrapper">
+      <div class="welcome" id="welcomeScreen">
+        <div class="welcome-icon">🌿</div>
+        <h2>脉大夫中医问诊</h2>
+        <p>欢迎来找脉大夫聊聊。不管是身体哪里不舒服，还是想聊聊养生调理，都可以跟我说。</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Input Area -->
+  <footer class="input-area">
+    <div class="recording-hint" id="recordingHint">🎤 正在听您说话... 再次点击麦克风结束</div>
+    <div class="input-wrapper">
+      <textarea
+        class="input-box"
+        id="userInput"
+        placeholder="输入消息，或点击麦克风说话..."
+        rows="1"
+      ></textarea>
+      <button class="voice-btn" id="voiceBtn" title="语音输入">🎤</button>
+      <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+  </footer>
+
+  <!-- 📸 摄像头弹框：望诊用 -->
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-panel">
+      <div class="camera-title"><span id="camIcon">👀</span><span id="camTitle">望诊</span></div>
+      <div class="camera-guide" id="camGuide">请将目标部位对准镜头</div>
+      <div class="camera-video-wrap">
+        <video id="camVideo" autoplay playsinline muted></video>
+        <canvas id="camCanvas"></canvas>
+        <div class="camera-frame-hint" id="camFrame"></div>
+      </div>
+      <div class="cam-status" id="camStatus"></div>
+      <div class="camera-actions">
+        <button class="cam-btn" id="camSkip" title="跳过本次望诊">跳过</button>
+        <button class="cam-btn" id="camRetry" style="display:none">↻ 重试</button>
+        <button class="cam-btn primary" id="camShoot">📷 拍照分析</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎙️ 录音弹框：闻诊用 -->
+  <div class="voice-modal" id="voiceModal">
+    <div class="voice-panel">
+      <div class="voice-title">🎙️ <span>闻诊 · 语声采集</span></div>
+      <div class="voice-script-hint">请点击麦克风，照下面这句话读一遍（3~5 秒）：</div>
+      <div class="voice-script" id="voiceScript">今天来看看我这身体情况</div>
+      <div class="voice-mic-wrap">
+        <button class="voice-mic" id="voiceMic" title="开始录音">🎤</button>
+        <div class="voice-countdown" id="voiceCountdown">点一下开始录音</div>
+        <div class="voice-level"><div class="voice-level-bar" id="voiceLevelBar"></div></div>
+      </div>
+      <div class="voice-status" id="voiceStatus"></div>
+      <div class="voice-actions">
+        <button class="cam-btn" id="voiceSkip" title="跳过本次闻诊">跳过</button>
+        <button class="cam-btn" id="voiceRetry" style="display:none">↻ 重录</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ State ============
+    let messages = []; // [{role, content}]
+    let isStreaming = false;
+    let abortController = null;
+    let personaLoaded = false;
+
+    const chatContainer = document.getElementById('chatContainer');
+    const messagesWrapper = document.getElementById('messagesWrapper');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusText = document.getElementById('statusText');
+    const modelSelect = document.getElementById('modelSelect');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+
+    // ============ Load Opening Message on startup ============
+    async function loadOpening() {
+      try {
+        const res = await fetch('/api/opening');
+        const data = await res.json();
+        if (data.opening) {
+          personaLoaded = true;
+          statusText.textContent = `${data.persona} · 已就绪`;
+          // 自动显示开场白
+          setTimeout(() => {
+            addMessage('ai', data.opening);
+          }, 500);
+        }
+      } catch (e) {
+        statusText.textContent = '脉大夫 · 加载失败';
+      }
+    }
+
+    // ============ Auto-resize textarea ============
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+    });
+
+    // ============ Send Message ============
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text || isStreaming) return;
+
+      // 停止可能还在朗读的语音
+      stopSpeaking();
+
+      // Add user message
+      addMessage('user', text);
+      messages.push({ role: 'user', content: text });
+
+      // Clear input
+      userInput.value = '';
+      userInput.style.height = 'auto';
+      // 同时清掉语音识别的累积缓存，否则下次输入会带出旧内容
+      recognitionFinalText = '';
+
+      // Show loading
+      const loadingId = showLoading();
+
+      // Stream response
+      isStreaming = true;
+      sendBtn.disabled = true;
+
+      try {
+        abortController = new AbortController();
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: modelSelect.value,
+            messages: messages
+          }),
+          signal: abortController.signal
+        });
+
+        removeLoading(loadingId);
+        const messageId = addMessage('ai', '');
+        const contentEl = document.querySelector(`[data-id="${messageId}"] .msg-text`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  fullContent += parsed.content;
+                  contentEl.innerHTML = renderMarkdown(fullContent);
+                  scrollToBottom();
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        messages.push({ role: 'assistant', content: fullContent });
+
+        // 检测是否有 tool_call 信号
+        const { signal } = extractToolCall(fullContent);
+
+        // 流式回复完成后自动朗读（用剥离后的纯文本）
+        try {
+          const msgEl = document.querySelector(`[data-id="${messageId}"]`);
+          const btn = msgEl ? msgEl.querySelector('.speaker-btn') : null;
+          const speakText = extractToolCall(fullContent).cleaned;
+          if (btn && speakText) {
+            toggleSpeak(btn, msgEl, speakText);
+          }
+        } catch (e) { console.warn('auto speak failed', e); }
+
+        // 处理信号
+        if (signal && signal.action) {
+          // 等朗读开始一点再弹出摄像头，体验更顺
+          setTimeout(() => handleSignal(signal), 600);
+        }
+
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          removeLoading(loadingId);
+          addMessage('ai', '抱歉，出错了：' + err.message);
+        }
+      } finally {
+        isStreaming = false;
+        sendBtn.disabled = false;
+        abortController = null;
+      }
+    }
+
+    // ============ UI Helpers ============
+    function addMessage(role, content) {
+      const id = 'msg-' + Date.now();
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      div.dataset.id = id;
+      const speakerBtn = role === 'ai'
+        ? `<button class="speaker-btn" data-action="speak" title="朗读此回复"><span class="speaker-icon">🔊</span><span class="speaker-label">朗读</span></button>`
+        : '';
+      div.innerHTML = `
+        <div class="avatar">${role === 'ai' ? '🧑‍⚕️' : '🙋'}</div>
+        <div class="message-content">
+          <div class="msg-text">${content ? renderMarkdown(content) : ''}</div>
+          ${speakerBtn}
+        </div>
+      `;
+      messagesWrapper.appendChild(div);
+      if (role === 'ai') {
+        const btn = div.querySelector('.speaker-btn');
+        if (btn) btn.addEventListener('click', () => toggleSpeak(btn, div));
+      }
+      scrollToBottom();
+      return id;
+    }
+
+    function showLoading() {
+      const id = 'loading-' + Date.now();
+      const div = document.createElement('div');
+      div.className = 'message ai';
+      div.dataset.loadingId = id;
+      div.innerHTML = `
+        <div class="avatar">🧑‍⚕️</div>
+        <div class="message-content">
+          <div class="loading">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </div>
+        </div>
+      `;
+      messagesWrapper.appendChild(div);
+      scrollToBottom();
+      return id;
+    }
+
+    function removeLoading(id) {
+      const el = document.querySelector(`[data-loading-id="${id}"]`);
+      if (el) el.remove();
+    }
+
+    function scrollToBottom() {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // 从文本中提取 tool_call JSON，并返回剥离后的文本
+    function extractToolCall(text) {
+      const re = /```tool_call\s*([\s\S]*?)```/i;
+      const m = text.match(re);
+      if (!m) return { cleaned: text, signal: null };
+      let signal = null;
+      try { signal = JSON.parse(m[1].trim()); } catch (e) { console.warn('tool_call JSON 解析失败:', e); }
+      const cleaned = text.replace(re, '').trim();
+      return { cleaned, signal };
+    }
+
+    function renderMarkdown(text) {
+      // 先剥离 tool_call 代码块（防止流式过程中露出来）
+      const { cleaned } = extractToolCall(text);
+      return cleaned
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/\n/g, '<br>');
+    }
+
+    // ============ Event Listeners ============
+    sendBtn.addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('确定要开始新的问诊吗？当前对话将被清空。')) {
+        messages = [];
+        messagesWrapper.innerHTML = `
+          <div class="welcome" id="welcomeScreen">
+            <div class="welcome-icon">🌿</div>
+            <h2>脉大夫中医问诊</h2>
+            <p>欢迎来找脉大夫聊聊。不管是身体哪里不舒服，还是想聊聊养生调理，都可以跟我说。</p>
+          </div>
+        `;
+        // 重新加载开场白
+        setTimeout(() => {
+          loadOpening();
+        }, 300);
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      if (messages.length === 0) {
+        alert('还没有对话记录');
+        return;
+      }
+      let md = '# 脉大夫问诊记录\n\n';
+      md += `**时间**: ${new Date().toLocaleString()}\n\n`;
+      md += '---\n\n';
+      for (const msg of messages) {
+        if (msg.role === 'user') {
+          md += `**患者**: ${msg.content}\n\n`;
+        } else {
+          md += `**脉大夫**: ${msg.content}\n\n`;
+        }
+      }
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `脉大夫问诊记录-${new Date().toISOString().slice(0, 10)}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ============ 🎤 Voice Input (STT) ============
+    const voiceBtn = document.getElementById('voiceBtn');
+    const recordingHint = document.getElementById('recordingHint');
+    let recognition = null;
+    let isRecording = false;
+    let recognitionFinalText = '';
+
+    function initRecognition() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        voiceBtn.disabled = true;
+        voiceBtn.title = '当前浏览器不支持语音识别，建议使用 Chrome/Edge/Safari';
+        voiceBtn.style.opacity = '0.4';
+        return null;
+      }
+      const r = new SR();
+      r.lang = 'zh-CN';
+      r.continuous = true;
+      r.interimResults = true;
+      r.maxAlternatives = 1;
+
+      r.onstart = () => {
+        isRecording = true;
+        recognitionFinalText = '';
+        voiceBtn.classList.add('recording');
+        voiceBtn.textContent = '⏺';
+        recordingHint.classList.add('active');
+      };
+
+      r.onresult = (e) => {
+        // 只有正在录音时才更新输入框，避免停止后延迟回调污染
+        if (!isRecording) return;
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) {
+            recognitionFinalText += t;
+          } else {
+            interim += t;
+          }
+        }
+        userInput.value = recognitionFinalText + interim;
+        userInput.style.height = 'auto';
+        userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+      };
+
+      r.onerror = (e) => {
+        console.warn('语音识别错误:', e.error);
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          alert('请允许使用麦克风权限后重试');
+        } else if (e.error === 'no-speech') {
+          // 没说话，静默处理
+        }
+        stopRecognition();
+      };
+
+      r.onend = () => {
+        stopRecognition();
+        // 识别结束后，如果有内容且页面允许，自动发送
+        const text = userInput.value.trim();
+        if (text && !isStreaming) {
+          setTimeout(() => sendMessage(), 200);
+        }
+      };
+
+      return r;
+    }
+
+    function startRecognition() {
+      if (!recognition) recognition = initRecognition();
+      if (!recognition) return;
+      // 启动前停止 TTS，避免边说边朗读
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      try {
+        recognition.start();
+      } catch (e) {
+        console.warn('启动录音失败:', e);
+      }
+    }
+
+    function stopRecognition() {
+      isRecording = false;
+      voiceBtn.classList.remove('recording');
+      voiceBtn.textContent = '🎤';
+      recordingHint.classList.remove('active');
+      if (recognition) {
+        try { recognition.stop(); } catch (e) {}
+      }
+    }
+
+    voiceBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecognition();
+      } else {
+        startRecognition();
+      }
+    });
+
+    // ============ 🔊 Voice Output (TTS) ============
+    let currentSpeakingBtn = null;
+
+    function cleanTextForTTS(text) {
+      return text
+        // 代码块 / 行内代码
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        // markdown 强调
+        .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        // AI 的动作描写 *微笑着点点头*，直接扔掉
+        .replace(/\*[^*\n]+\*/g, '')
+        // 标题/列表符号
+        .replace(/^#+ /gm, '')
+        .replace(/^- /gm, '')
+        // 🎯 emoji / 表情符号：扫描 Unicode 表情区间，直接去掉
+        .replace(/\p{Extended_Pictographic}/gu, '')
+        // 变体选择符、零宽连接符（和 emoji 配合出现的不可见字符）
+        .replace(/[\uFE0F\u200D]/g, '')
+        // 换行折叠成句号
+        .replace(/\n+/g, '。')
+        .replace(/。+/g, '。')
+        // 连续空白压成一个空格
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+    }
+
+    function stopSpeaking() {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      if (currentSpeakingBtn) {
+        currentSpeakingBtn.classList.remove('speaking');
+        const label = currentSpeakingBtn.querySelector('.speaker-label');
+        if (label) label.textContent = '朗读';
+        currentSpeakingBtn = null;
+      }
+    }
+
+    // 服务端 TTS 音频对象（用于停止播放）
+    let serverAudio = null;
+
+    function toggleSpeak(btn, msgEl, overrideText) {
+      // 如果点的是正在播放的按钮 -> 停止
+      if (currentSpeakingBtn === btn) {
+        stopSpeaking();
+        return;
+      }
+      // 停止其他正在播放的
+      stopSpeaking();
+
+      // 取文本
+      let text = overrideText;
+      if (!text) {
+        const textEl = msgEl.querySelector('.msg-text');
+        text = textEl ? textEl.innerText : '';
+      }
+      text = cleanTextForTTS(text || '');
+      if (!text) return;
+
+      btn.classList.add('speaking');
+      const label = btn.querySelector('.speaker-label');
+      if (label) label.textContent = '停止';
+      currentSpeakingBtn = btn;
+
+      // 调服务端 TTS → 返回 MP3 → 用 Audio 播放
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('TTS HTTP ' + r.status);
+        return r.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        serverAudio = audio;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          serverAudio = null;
+          btn.classList.remove('speaking');
+          if (label) label.textContent = '朗读';
+          if (currentSpeakingBtn === btn) currentSpeakingBtn = null;
+        };
+        audio.onerror = audio.onended;
+
+        audio.play().catch(e => {
+          console.warn('[TTS] 播放失败:', e);
+          audio.onended();
+        });
+      })
+      .catch(err => {
+        console.warn('[TTS] 服务端合成失败:', err.message);
+        // 兜底：尝试浏览器原生 TTS（至少能出声）
+        if ('speechSynthesis' in window) {
+          const fallback = new SpeechSynthesisUtterance(text);
+          fallback.lang = 'zh-CN';
+          fallback.rate = 0.8;
+          fallback.pitch = 0.45;
+          fallback.volume = 0.95;
+          fallback.onend = () => {
+            btn.classList.remove('speaking');
+            if (label) label.textContent = '朗读';
+            if (currentSpeakingBtn === btn) currentSpeakingBtn = null;
+          };
+          fallback.onerror = fallback.onend;
+          window.speechSynthesis.speak(fallback);
+        } else {
+          btn.classList.remove('speaking');
+          if (label) label.textContent = '朗读';
+          currentSpeakingBtn = null;
+          alert('语音朗读暂时不可用');
+        }
+      });
+    }
+
+    // 覆盖原 stopSpeaking，增加服务端 Audio 停止
+    const _origStopSpeaking = stopSpeaking;
+    stopSpeaking = () => {
+      if (serverAudio) { serverAudio.pause(); serverAudio = null; }
+      _origStopSpeaking();
+    };
+
+    // 页面离开时停止朗读
+    window.addEventListener('beforeunload', stopSpeaking);
+
+    // ============ 👁️ 望诊：摄像头 + 信号处理 ============
+    const cameraModal = document.getElementById('cameraModal');
+    const camVideo = document.getElementById('camVideo');
+    const camCanvas = document.getElementById('camCanvas');
+    const camShoot = document.getElementById('camShoot');
+    const camSkip = document.getElementById('camSkip');
+    const camRetry = document.getElementById('camRetry');
+    const camStatus = document.getElementById('camStatus');
+    const camTitle = document.getElementById('camTitle');
+    const camIcon = document.getElementById('camIcon');
+    const camGuide = document.getElementById('camGuide');
+    const camFrame = document.getElementById('camFrame');
+    let camStream = null;
+    let pendingKind = null; // 'face' | 'tongue'
+    let pendingConfig = null; // 保存弹框配置以便重试
+
+    function setCamStatus(text, level) {
+      camStatus.className = 'cam-status' + (level ? ' ' + level : '');
+      camStatus.textContent = text || '';
+    }
+
+    function setCamButtons({ shoot=true, retry=false, skipText='跳过' }) {
+      camShoot.style.display = shoot ? '' : 'none';
+      camRetry.style.display = retry ? '' : 'none';
+      camSkip.textContent = skipText;
+    }
+
+    async function openCamera(kind, cfg) {
+      pendingKind = kind;
+      pendingConfig = cfg;
+      camTitle.textContent = cfg.title;
+      camIcon.textContent = cfg.icon;
+      camGuide.textContent = cfg.guide;
+      camFrame.className = 'camera-frame-hint' + (kind === 'tongue' ? ' tongue' : '');
+      setCamStatus('正在打开摄像头...');
+      setCamButtons({ shoot: true, retry: false });
+      camShoot.disabled = true;
+      cameraModal.classList.add('active');
+
+      try {
+        // 先关掉旧的流
+        if (camStream) {
+          camStream.getTracks().forEach(t => t.stop());
+          camStream = null;
+        }
+        camStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+          audio: false
+        });
+        camVideo.srcObject = camStream;
+        await camVideo.play();
+        setCamStatus('准备好后点击"拍照分析"');
+        camShoot.disabled = false;
+      } catch (err) {
+        console.error('摄像头错误:', err);
+        setCamStatus('无法使用摄像头：' + (err.message || err.name || '权限被拒绝') + '。请检查浏览器权限后点击重试。', 'err');
+        setCamButtons({ shoot: false, retry: true });
+      }
+    }
+
+    function stopCameraStream() {
+      if (camStream) {
+        camStream.getTracks().forEach(t => t.stop());
+        camStream = null;
+      }
+      camVideo.srcObject = null;
+    }
+
+    function closeCamera() {
+      cameraModal.classList.remove('active');
+      stopCameraStream();
+    }
+
+    async function captureAndAnalyze() {
+      const kind = pendingKind;
+      if (!kind || !camStream) {
+        setCamStatus('摄像头未就绪，请点击重试', 'err');
+        setCamButtons({ shoot: false, retry: true });
+        return;
+      }
+
+      const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+      if (!vw || !vh) {
+        setCamStatus('画面未加载，请点击重试', 'err');
+        setCamButtons({ shoot: false, retry: true });
+        return;
+      }
+
+      camCanvas.width = vw;
+      camCanvas.height = vh;
+      const ctx = camCanvas.getContext('2d');
+      ctx.drawImage(camVideo, 0, 0, vw, vh);
+
+      setCamStatus('拍照完成，正在分析...');
+      camShoot.disabled = true;
+      camSkip.disabled = true;
+
+      camCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          setCamStatus('图像编码失败，请重试', 'err');
+          setCamButtons({ shoot: false, retry: true });
+          camSkip.disabled = false;
+          return;
+        }
+        try {
+          const form = new FormData();
+          form.append('file', blob, `${kind}.jpg`);
+          const res = await fetch(`/api/diagnosis/${kind}`, { method: 'POST', body: form });
+          const data = await res.json();
+
+          if (!res.ok) {
+            // 422 通常是未检测到人脸/舌头；502 是服务未启动；其他是系统错误
+            const detail = data.detail || data.error || `HTTP ${res.status}`;
+            const reason = parseFailureReason(kind, res.status, detail);
+            setCamStatus(`检测失败：${reason}`, 'err');
+            setCamButtons({ shoot: false, retry: true });
+            camSkip.disabled = false;
+            return;
+          }
+
+          // 成功
+          setCamStatus('分析成功！正在回传脉大夫...', 'ok');
+          const summary = summarizeDiagnosis(kind, data);
+          setTimeout(() => {
+            closeCamera();
+            camSkip.disabled = false;
+            pushDiagnosisResult(kind, data, summary);
+          }, 500);
+        } catch (err) {
+          console.error('望诊分析失败:', err);
+          setCamStatus('检测失败：' + (err.message || '网络异常'), 'err');
+          setCamButtons({ shoot: false, retry: true });
+          camSkip.disabled = false;
+        }
+      }, 'image/jpeg', 0.92);
+    }
+
+    // 把后端错误翻译成用户能看懂的话
+    function parseFailureReason(kind, status, detail) {
+      const d = String(detail || '');
+      // tcm 后端在未检测到对象时抛 ValueError，会变成 422
+      if (status === 422 || /未检测到|not found|no face|no tongue/i.test(d)) {
+        return kind === 'face'
+          ? '没有识别到清晰的人脸，请把脸放进取景圈，光线亮一点再试'
+          : '没有识别到清晰的舌头，请伸舌到取景圈，张大嘴巴再试';
+      }
+      if (status === 502 || /未就绪|not ready/i.test(d)) {
+        return '望诊服务未启动，请联系管理员';
+      }
+      if (status === 400) return '图像为空或格式不对，请重新拍摄';
+      return d.length > 80 ? d.slice(0, 80) + '...' : d;
+    }
+
+    function retryCapture() {
+      // 重新走一次打开摄像头流程
+      if (pendingKind && pendingConfig) {
+        openCamera(pendingKind, pendingConfig);
+      }
+    }
+
+    function skipDiagnosis() {
+      const kind = pendingKind;
+      closeCamera();
+      camSkip.disabled = false;
+      const label = kind === 'face' ? '面部望诊' : kind === 'tongue' ? '舌部望诊' : '望诊';
+      pushDiagnosisResult(kind, null, `[${label}·跳过] 患者本轮不方便拍照，请以问诊方式继续了解，不要再次追问是否要拍`);
+    }
+
+    // 把后端 JSON 转成 AI 易读、患者友好的中文摘要
+    function summarizeDiagnosis(kind, data) {
+      try {
+        if (kind === 'face') {
+          const fd = data.facial_diagnosis || {};
+          const cc = fd.complexion_color || {};
+          const sp = fd.spirit_expression || {};
+          const ec = sp.eye_condition || {};
+          const ff = fd.facial_features || {};
+          const hair = ff.hair_condition || {};
+          const puf = ff.facial_puffiness || {};
+          const skin = ff.skin_texture || {};
+          const tcm = data.tcm_diagnosis || {};
+
+          const lines = ['[望诊·面部结果]'];
+
+          // ── 面色 ──
+          const faceParts = [];
+          if (cc.primary_color) faceParts.push(`主色${cc.primary_color}`);
+          if (cc.color_distribution) faceParts.push(`分布${cc.color_distribution}`);
+          if (cc.glossiness) faceParts.push(`${cc.glossiness}`);
+          if (faceParts.length) lines.push('面色：' + faceParts.join('、'));
+
+          // ── 神态 ──
+          if (sp.mental_state) lines.push('神态：' + sp.mental_state + (sp.facial_expression ? `、表情${sp.facial_expression}` : ''));
+
+          // ── 眼睛 ──
+          const eyeParts = [];
+          if (ec.brightness) eyeParts.push(ec.brightness);
+          if (ec.dark_circles && ec.dark_circles !== '无') eyeParts.push(`黑眼圈${ec.dark_circles}`);
+          if (ec.eye_bags && ec.eye_bags !== '无') eyeParts.push(`眼袋${ec.eye_bags}`);
+          if (ec.redness && ec.redness !== '无') eyeParts.push(ec.redness);
+          if (eyeParts.length) lines.push('眼睛：' + eyeParts.join('、'));
+
+          // ── 头发 ──
+          const hairParts = [];
+          if (hair.shine) hairParts.push(hair.shine);
+          if (hair.density) hairParts.push(hair.density);
+          if (hairParts.length) lines.push('头发：' + hairParts.join('、'));
+
+          // ── 面部浮肿 ──
+          if (puf.status && puf.status !== '无') lines.push(`浮肿：${puf.status}（${puf.location || '全脸'}）`);
+
+          // ── 皮肤 ──
+          const skinParts = [];
+          if (skin.oiliness) skinParts.push(skin.oiliness);
+          if (skin.pores) skinParts.push(`毛孔${skin.pores}`);
+          if (skin.elasticity) skinParts.push(`弹性${skin.elasticity}`);
+          if (skinParts.length) lines.push('皮肤：' + skinParts.join('、'));
+
+          // ── 辨证 ──
+          const zheng = (tcm['主要证型'] || []).join('、');
+          const yaodian = (tcm['辨证要点'] || []).join('、');
+          const tiaoli = (tcm['调理建议'] || []).join('；');
+          if (zheng) lines.push('辨证初判：' + zheng);
+          if (yaodian) lines.push('辨证要点：' + yaodian);
+          if (tiaoli) lines.push('调理方向：' + tiaoli);
+
+          return lines.join('\n');
+        }
+
+        if (kind === 'tongue') {
+          const td = data.tongue_diagnosis || {};
+          const body = td.tongue_body || {};
+          const coating = td.tongue_coating || {};
+          const sublv = td.sublingual_vein || {};
+          const tcm = data.tcm_diagnosis || {};
+
+          const lines = ['[望诊·舌部结果]'];
+
+          // ── 舌体 ──
+          const bodyColor = body.color || {};
+          const shape = body.shape || {};
+          const texture = body.texture || {};
+          const bodyParts = [];
+          if (bodyColor.main_color) bodyParts.push(`舌色${bodyColor.main_color}`);
+          if (bodyColor.uniformity) bodyParts.push(bodyColor.uniformity);
+          if (shape.size) bodyParts.push(`舌形${shape.size}`);
+          if (shape.teeth_marks && shape.teeth_marks !== '无') bodyParts.push(`齿痕${shape.teeth_marks}`);
+          if (shape.fissures && shape.fissures.has_fissures) {
+            bodyParts.push(`裂纹${shape.fissures.fissure_count || '有'}${shape.fissures.fissure_pattern ? '(' + shape.fissures.fissure_pattern + ')' : ''}`);
+          } else {
+            bodyParts.push('裂纹无');
+          }
+          if (texture.type) bodyParts.push(texture.type);
+          if (texture.dryness && texture.dryness !== '正常') bodyParts.push(texture.dryness);
+          if (texture.petechiae && texture.petechiae.has_petechiae) bodyParts.push(`瘀点${texture.petechiae.count || '有'}`);
+          if (bodyParts.length) lines.push('舌体：' + bodyParts.join('、'));
+
+          // ── 舌苔 ──
+          const coatColor = coating.color || {};
+          const thick = coating.thickness || {};
+          const dist = coating.distribution || {};
+          const coatTex = coating.texture || {};
+          const coatParts = [];
+          if (coatColor.main_color) coatParts.push(`苔色${coatColor.main_color}`);
+          if (thick.level) coatParts.push(`${thick.level}苔`);
+          if (coatTex.type) coatParts.push(coatTex.type);
+          if (coatTex.greasiness && coatTex.greasiness !== '无') coatParts.push(coatTex.greasiness);
+          if (dist.coverage) coatParts.push(`覆盖${dist.coverage}`);
+          if (coatParts.length) lines.push('舌苔：' + coatParts.join('、'));
+
+          // ── 舌下络脉 ──
+          if (sublv && sublv.visible) {
+            const subParts = [];
+            if (sublv.color) subParts.push(`色${sublv.color}`);
+            if (sublv.width && sublv.width.status) subParts.push(sublv.width.status);
+            if (sublv.tortuosity) subParts.push(sublv.tortuosity);
+            if (sublv.stasis && sublv.stasis.has_stasis) subParts.push(`有瘀（${sublv.stasis.stasis_degree || '轻'}）`);
+            if (subParts.length) lines.push('舌下络脉：' + subParts.join('、'));
+          }
+
+          // ── 辨证 ──
+          const zheng = (tcm['主要证型'] || []).join('、');
+          const yaodian = (tcm['辨证要点'] || []).join('、');
+          const tiaoli = (tcm['调理建议'] || []).join('；');
+          if (zheng) lines.push('辨证初判：' + zheng);
+          if (yaodian) lines.push('辨证要点：' + yaodian);
+          if (tiaoli) lines.push('调理方向：' + tiaoli);
+
+          return lines.join('\n');
+        }
+
+        if (kind === 'voice') {
+          const vd = data.voice_diagnosis || {};
+          const v = vd.voice || {};
+          const r = vd.speech_rhythm || {};
+          const tcm = data.tcm_diagnosis || {};
+
+          const lines = ['[闻诊·语声结果]'];
+
+          // ── 语声 ──
+          const vParts = [];
+          if (v.volume) vParts.push('音量' + v.volume);
+          if (v.pitch) vParts.push('音调' + v.pitch);
+          if (v.hoarseness && v.hoarseness.present) {
+            vParts.push('嘶哑(' + (v.hoarseness.degree || '轻度') + ')');
+          } else {
+            vParts.push('嘶哑无');
+          }
+          vParts.push(v.tremor_present ? '声颤有' : '声颤无');
+          if (vParts.length) lines.push('语声：' + vParts.join('、'));
+
+          // ── 节奏 ──
+          const rParts = [];
+          if (r.speed) rParts.push('语速' + r.speed);
+          if (r.fluency) rParts.push('流畅度' + r.fluency);
+          if (r.breath_pause_frequency) rParts.push('换气' + r.breath_pause_frequency);
+          if (rParts.length) lines.push('节奏：' + rParts.join('、'));
+
+          // ── 辨证 ──
+          const zheng = (tcm['主要证型'] || []).join('、');
+          const yaodian = (tcm['辨证要点'] || []).join('、');
+          const tiaoli = (tcm['调理建议'] || []).join('；');
+          if (zheng) lines.push('辨证初判：' + zheng);
+          if (yaodian) lines.push('辨证要点：' + yaodian);
+          if (tiaoli) lines.push('调理方向：' + tiaoli);
+
+          return lines.join('\n');
+        }
+      } catch (e) { console.warn('summarize err', e); }
+      return '[望闻诊结果]\n' + JSON.stringify(data).slice(0, 400);
+    }
+
+    // 把望诊结果作为一条 user 消息塞回对话，并触发下一轮 AI 回复
+    async function pushDiagnosisResult(kind, data, text) {
+      if (isStreaming) return;
+      const payload = text || '[望诊·失败] 未知原因';
+
+      // UI：用卡片样式展示望诊结果（追加到历史后面，不清空）
+      const card = document.createElement('div');
+      card.className = 'message user';
+      const kindLabel = kind === 'face' ? '面部望诊' : kind === 'tongue' ? '舌部望诊' : kind === 'voice' ? '闻诊·语声' : '四诊';
+      card.innerHTML = `
+        <div class="avatar">🔍</div>
+        <div class="message-content">
+          <div class="diagnosis-card">
+            <div class="tag">${kindLabel}结果</div>
+            <div class="msg-text">${renderMarkdown(payload)}</div>
+          </div>
+        </div>
+      `;
+      messagesWrapper.appendChild(card);
+      scrollToBottom();
+
+      // 加入消息历史
+      messages.push({ role: 'user', content: payload });
+
+      // 触发下一轮 AI 回复（复用 sendMessage 的流式逻辑的"后半段"）
+      await continueAfterUserMessage();
+    }
+
+    // 从 sendMessage 抽出的"发起请求并渲染流式回复"部分，供望诊回传复用
+    async function continueAfterUserMessage() {
+      const loadingId = showLoading();
+      isStreaming = true;
+      sendBtn.disabled = true;
+      try {
+        abortController = new AbortController();
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: modelSelect.value, messages: messages }),
+          signal: abortController.signal
+        });
+
+        removeLoading(loadingId);
+        const messageId = addMessage('ai', '');
+        const contentEl = document.querySelector(`[data-id="${messageId}"] .msg-text`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  fullContent += parsed.content;
+                  contentEl.innerHTML = renderMarkdown(fullContent);
+                  scrollToBottom();
+                }
+              } catch (e) {}
+            }
+          }
+        }
+
+        messages.push({ role: 'assistant', content: fullContent });
+        const { signal } = extractToolCall(fullContent);
+
+        try {
+          const msgEl = document.querySelector(`[data-id="${messageId}"]`);
+          const btn = msgEl ? msgEl.querySelector('.speaker-btn') : null;
+          const sayText = extractToolCall(fullContent).cleaned;
+          if (btn && sayText) toggleSpeak(btn, msgEl, sayText);
+        } catch (e) {}
+
+        if (signal && signal.action) {
+          setTimeout(() => handleSignal(signal), 600);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          removeLoading(loadingId);
+          addMessage('ai', '抱歉，出错了：' + err.message);
+        }
+      } finally {
+        isStreaming = false;
+        sendBtn.disabled = false;
+        abortController = null;
+      }
+    }
+
+    // ============ 🎙️ 闻诊：录音 + 分析 ============
+    const voiceModal = document.getElementById('voiceModal');
+    const voiceMic = document.getElementById('voiceMic');
+    const voiceScriptEl = document.getElementById('voiceScript');
+    const voiceCountdown = document.getElementById('voiceCountdown');
+    const voiceLevelBar = document.getElementById('voiceLevelBar');
+    const voiceStatus = document.getElementById('voiceStatus');
+    const voiceSkip = document.getElementById('voiceSkip');
+    const voiceRetry = document.getElementById('voiceRetry');
+
+    const MAX_REC_SECONDS = 5;
+    const MIN_REC_SECONDS = 1.2;
+
+    let voiceStream = null;
+    let voiceAudioCtx = null;
+    let voiceProcessor = null;
+    let voiceSource = null;
+    let voiceAnalyser = null;
+    let voiceBuffers = [];  // Float32Array 数组
+    let voiceSampleRate = 48000;
+    let voiceIsRecording = false;
+    let voiceStopTimer = null;
+    let voiceLevelTimer = null;
+    let voiceStartTs = 0;
+    let pendingVoiceScript = '';
+
+    function setVoiceStatus(text, level) {
+      voiceStatus.className = 'voice-status' + (level ? ' ' + level : '');
+      voiceStatus.textContent = text || '';
+    }
+
+    function openVoiceModal(guidance) {
+      // guidance 里可能带"请朗读：xxx"，抽出朗读句
+      pendingVoiceScript = extractScriptFromGuidance(guidance);
+      voiceScriptEl.textContent = pendingVoiceScript;
+      setVoiceStatus('');
+      voiceCountdown.textContent = '点一下麦克风开始（最长 5 秒）';
+      voiceLevelBar.style.width = '0%';
+      voiceMic.disabled = false;
+      voiceMic.classList.remove('recording');
+      voiceMic.textContent = '🎤';
+      voiceRetry.style.display = 'none';
+      voiceSkip.disabled = false;
+      voiceModal.classList.add('active');
+    }
+
+    function closeVoiceModal() {
+      voiceModal.classList.remove('active');
+      cleanupVoiceAudio();
+    }
+
+    function extractScriptFromGuidance(guidance) {
+      const g = String(guidance || '');
+      // 尝试从"请朗读：xxx"/"朗读：xxx"/引号包裹的句子里拿朗读内容
+      let m = g.match(/朗读[：:]\s*[""']?([^"""\n]{4,40})[""']?/);
+      if (m) return m[1].trim();
+      m = g.match(/[""']([^"""\n]{4,40})[""']/);
+      if (m) return m[1].trim();
+      // 没取到就用默认
+      return '今天来看看我这身体情况';
+    }
+
+    async function startVoiceRecording() {
+      if (voiceIsRecording) return;
+      setVoiceStatus('');
+      try {
+        voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      } catch (err) {
+        console.error('麦克风错误:', err);
+        setVoiceStatus('无法使用麦克风：' + (err.message || err.name || '权限被拒绝') + '，请检查浏览器权限后重试', 'err');
+        voiceRetry.style.display = '';
+        return;
+      }
+
+      voiceBuffers = [];
+      const AC = window.AudioContext || window.webkitAudioContext;
+      voiceAudioCtx = new AC();
+      voiceSampleRate = voiceAudioCtx.sampleRate;
+      voiceSource = voiceAudioCtx.createMediaStreamSource(voiceStream);
+
+      voiceAnalyser = voiceAudioCtx.createAnalyser();
+      voiceAnalyser.fftSize = 512;
+      voiceSource.connect(voiceAnalyser);
+
+      // ScriptProcessor 仍然是兼容性最好的方案
+      voiceProcessor = voiceAudioCtx.createScriptProcessor(4096, 1, 1);
+      voiceSource.connect(voiceProcessor);
+      voiceProcessor.connect(voiceAudioCtx.destination);
+      voiceProcessor.onaudioprocess = (e) => {
+        if (!voiceIsRecording) return;
+        // 拷贝一份（否则 buffer 会被复用）
+        const input = e.inputBuffer.getChannelData(0);
+        voiceBuffers.push(new Float32Array(input));
+      };
+
+      voiceIsRecording = true;
+      voiceStartTs = Date.now();
+      voiceMic.classList.add('recording');
+      voiceMic.textContent = '⏹';
+      voiceMic.title = '点击停止';
+      voiceCountdown.textContent = '正在录音…  倒计时 5';
+      voiceSkip.disabled = true;
+
+      // 实时电平
+      const levelData = new Uint8Array(voiceAnalyser.fftSize);
+      voiceLevelTimer = setInterval(() => {
+        if (!voiceIsRecording || !voiceAnalyser) return;
+        voiceAnalyser.getByteTimeDomainData(levelData);
+        let sum = 0;
+        for (let i = 0; i < levelData.length; i++) {
+          const v = (levelData[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / levelData.length);
+        voiceLevelBar.style.width = Math.min(100, rms * 300) + '%';
+        const elapsed = (Date.now() - voiceStartTs) / 1000;
+        const remain = Math.max(0, MAX_REC_SECONDS - elapsed);
+        voiceCountdown.textContent = `正在录音…  倒计时 ${remain.toFixed(1)}`;
+      }, 100);
+
+      // 最长录制时间
+      voiceStopTimer = setTimeout(() => {
+        stopVoiceRecordingAndAnalyze();
+      }, MAX_REC_SECONDS * 1000);
+    }
+
+    async function stopVoiceRecordingAndAnalyze() {
+      if (!voiceIsRecording) return;
+      voiceIsRecording = false;
+      voiceMic.classList.remove('recording');
+      voiceMic.textContent = '🎤';
+      voiceMic.disabled = true;
+      if (voiceStopTimer) { clearTimeout(voiceStopTimer); voiceStopTimer = null; }
+      if (voiceLevelTimer) { clearInterval(voiceLevelTimer); voiceLevelTimer = null; }
+
+      const elapsed = (Date.now() - voiceStartTs) / 1000;
+      if (elapsed < MIN_REC_SECONDS || voiceBuffers.length === 0) {
+        setVoiceStatus(`录音时长太短（${elapsed.toFixed(1)} 秒），请再来一次`, 'err');
+        cleanupVoiceAudio();
+        voiceRetry.style.display = '';
+        voiceSkip.disabled = false;
+        return;
+      }
+
+      setVoiceStatus('录音完成，正在分析...');
+      voiceCountdown.textContent = `本次录音 ${elapsed.toFixed(1)} 秒`;
+
+      // 合并并编码为 WAV
+      const wavBlob = encodeWavFromFloat32(voiceBuffers, voiceSampleRate);
+      cleanupVoiceAudio();
+
+      try {
+        const form = new FormData();
+        form.append('file', wavBlob, 'voice.wav');
+        const res = await fetch('/api/diagnosis/voice', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || data.error || `HTTP ${res.status}`;
+          const reason = parseVoiceFailureReason(res.status, detail);
+          setVoiceStatus('分析失败：' + reason, 'err');
+          voiceRetry.style.display = '';
+          voiceSkip.disabled = false;
+          return;
+        }
+        // 成功
+        setVoiceStatus('分析成功！正在回传脉大夫...', 'ok');
+        const summary = summarizeDiagnosis('voice', data);
+        setTimeout(() => {
+          closeVoiceModal();
+          voiceSkip.disabled = false;
+          pushDiagnosisResult('voice', data, summary);
+        }, 500);
+      } catch (err) {
+        console.error('闻诊分析失败:', err);
+        setVoiceStatus('分析失败：' + (err.message || '网络异常'), 'err');
+        voiceRetry.style.display = '';
+        voiceSkip.disabled = false;
+      }
+    }
+
+    function cleanupVoiceAudio() {
+      try { if (voiceProcessor) { voiceProcessor.disconnect(); voiceProcessor.onaudioprocess = null; voiceProcessor = null; } } catch (e) {}
+      try { if (voiceSource) { voiceSource.disconnect(); voiceSource = null; } } catch (e) {}
+      try { if (voiceAnalyser) { voiceAnalyser.disconnect(); voiceAnalyser = null; } } catch (e) {}
+      try { if (voiceAudioCtx) { voiceAudioCtx.close(); voiceAudioCtx = null; } } catch (e) {}
+      if (voiceStream) { voiceStream.getTracks().forEach(t => t.stop()); voiceStream = null; }
+      voiceIsRecording = false;
+    }
+
+    function parseVoiceFailureReason(status, detail) {
+      const d = String(detail || '');
+      if (status === 422 || /太短|无法分析|空|无声/.test(d)) {
+        return '录音里没听清您的声音，请靠近麦克风、念得响亮一点，重新录一次';
+      }
+      if (status === 502) return '闻诊服务未启动，请联系管理员';
+      if (status === 400) return '录音为空，请重新录制';
+      return d.length > 80 ? d.slice(0, 80) + '...' : d;
+    }
+
+    // —— Float32Array 列表 → WAV Blob ——
+    function encodeWavFromFloat32(buffers, sampleRate) {
+      let total = 0;
+      for (const b of buffers) total += b.length;
+      const merged = new Float32Array(total);
+      let offset = 0;
+      for (const b of buffers) { merged.set(b, offset); offset += b.length; }
+
+      // Float32 [-1, 1] → Int16
+      const pcm = new Int16Array(merged.length);
+      for (let i = 0; i < merged.length; i++) {
+        let s = Math.max(-1, Math.min(1, merged[i]));
+        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+
+      const bytesPerSample = 2;
+      const blockAlign = 1 * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = pcm.length * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      function wstr(off, s) { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); }
+
+      wstr(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      wstr(8, 'WAVE');
+      wstr(12, 'fmt ');
+      view.setUint32(16, 16, true);       // PCM fmt chunk size
+      view.setUint16(20, 1, true);        // PCM
+      view.setUint16(22, 1, true);        // mono
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true);       // 16-bit
+      wstr(36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      let off = 44;
+      for (let i = 0; i < pcm.length; i++, off += 2) view.setInt16(off, pcm[i], true);
+
+      return new Blob([view], { type: 'audio/wav' });
+    }
+
+    // —— 录音弹框事件 ——
+    voiceMic.addEventListener('click', () => {
+      if (voiceIsRecording) {
+        stopVoiceRecordingAndAnalyze();
+      } else {
+        startVoiceRecording();
+      }
+    });
+    voiceSkip.addEventListener('click', () => {
+      cleanupVoiceAudio();
+      closeVoiceModal();
+      pushDiagnosisResult('voice', null, '[闻诊·跳过] 患者本轮不方便录音，请以问诊方式继续了解，不要再次追问是否要录');
+    });
+    voiceRetry.addEventListener('click', () => {
+      setVoiceStatus('');
+      voiceRetry.style.display = 'none';
+      voiceLevelBar.style.width = '0%';
+      voiceCountdown.textContent = '点一下麦克风开始（最长 5 秒）';
+      voiceMic.disabled = false;
+    });
+
+    // ============ 信号分发 ============
+    function handleSignal(signal) {
+      const action = (signal.action || '').toUpperCase();
+      const guidance = signal.guidance || '';
+      if (action === 'CAPTURE_FACE') {
+        openCamera('face', {
+          title: '面部望诊',
+          icon: '👤',
+          guide: guidance || '请面朝镜头，保持自然光，露出完整面部'
+        });
+      } else if (action === 'CAPTURE_TONGUE') {
+        openCamera('tongue', {
+          title: '舌部望诊',
+          icon: '👅',
+          guide: guidance || '请伸舌头，伸至舒适位置，让舌面完整对准镜头'
+        });
+      } else if (action === 'RECORD_VOICE') {
+        openVoiceModal(guidance);
+      } else if (action === 'GENERATE_REPORT') {
+        // 报告：AI 已经在文字中生成了，这里只是标记一下
+        console.info('[GENERATE_REPORT 信号]', signal);
+      } else {
+        console.warn('未识别的信号:', action);
+      }
+    }
+
+    camShoot.addEventListener('click', captureAndAnalyze);
+    camRetry.addEventListener('click', retryCapture);
+    camSkip.addEventListener('click', skipDiagnosis);
+
+    // ============ Init ============
+    loadOpening();
+  </script>
+</body>
+</html>
