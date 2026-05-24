@@ -8,25 +8,13 @@ AI 中医四诊问诊系统 Web 端。基于 Node.js 后端 + 单页 HTML 前端
 # 1. 环境要求：Node.js 18+
 node -v
 
-# 2. 设置 API Key（用于 AI 对话功能）
-export CODEBUDDY_API_KEY="your_api_key_here"
-
-# 3. 启动服务
+# 2. 启动服务（API Key 已内置，无需额外配置）
 node server.js
 # 服务运行在 http://localhost:3215
 
-# 4. 打开主页面
+# 3. 打开主页面
 # 浏览器访问 http://localhost:3215/index-v3.html
 ```
-
-### 关于 API Key
-
-对话功能依赖 CodeBuddy Claw API，需要设置 `CODEBUDDY_API_KEY` 环境变量。
-
-- **没有 key 时**：服务可正常启动，页面 UI（调理计划、商城、TTS）均可预览，但 AI 对话无法使用
-- **获取方式**：请联系项目维护者获取
-
-> 💡 如需本地演示但无 key，可直接打开 `public/index-v3.html` 作为静态文件查看 UI（商城、调理计划页面均不依赖后端）
 
 ## 项目结构
 

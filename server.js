@@ -13,7 +13,7 @@ const CONFIG = {
   port: process.env.PORT || 3215,
   apiEndpoint: 'copilot.tencent.com',
   apiPath: '/v2/chat/completions',
-  apiKey: process.env.CODEBUDDY_API_KEY || ''
+  apiKey: process.env.CODEBUDDY_API_KEY || 'ck_fi5qn7671o8w.S0XOPduaPm1QzIEWjGgUEEqTMyBGqcH6lKWYwNcSmrI'
 };
 
 // ============ 加载脉大夫人设 ============
